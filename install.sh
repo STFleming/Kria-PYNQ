@@ -26,13 +26,13 @@ BOARD=KV260
 PYNQ_VENV=/usr/local/share/pynq-venv
 
 # Get PYNQ SDbuild Packages
-if [ -d ".git/" ]
-then
-  git submodule init && git submodule update
-else
-  rm -rf pynq/
-  #git clone https://github.com/Xilinx/PYNQ.git -b image_v2.7 --depth 1 pynq
-fi
+#if [ -d ".git/" ]
+#then
+#  git submodule init && git submodule update
+#else
+#  rm -rf pynq/
+#  #git clone https://github.com/Xilinx/PYNQ.git -b image_v2.7 --depth 1 pynq
+#fi
 
 
 # Stop unattended upgrades to prevent apt install from failing
@@ -106,8 +106,9 @@ popd
 
 
 # Get PYNQ Binaries (ublaze compiler and xclbinutils
+cp pynq_binaries.tar.gz /tmp
 pushd /tmp
-wget https://bit.ly/pynq_binaries_2_7 -O pynq_binaries.tar.gz
+#wget https://bit.ly/pynq_binaries_3_0 -O pynq_binaries.tar.gz
 if [ $(file --mime-type -b pynq_binaries.tar.gz) != "application/gzip" ]; then
   echo -e "${RED}Could not download pynq binaries, server may be down${NC}\n"
   exit
@@ -115,10 +116,10 @@ fi
 
 tar -xf pynq_binaries.tar.gz
 
-cp -r /tmp/pynq-v2.7-binaries/gcc-mb/microblazeel-xilinx-elf /usr/local/share/pynq-venv/bin/
+cp -r /tmp/pynq-v3.0-binaries/gcc-mb/microblazeel-xilinx-elf /usr/local/share/pynq-venv/bin/
 echo "export PATH=\$PATH:/usr/local/share/pynq-venv/bin/microblazeel-xilinx-elf/bin/" >> /etc/profile.d/pynq_venv.sh
 
-cp pynq-v2.7-binaries/xrt/xclbinutil /usr/local/share/pynq-venv/bin/
+cp pynq-v3.0-binaries/xrt/xclbinutil /usr/local/share/pynq-venv/bin/
 chmod +x /usr/local/share/pynq-venv/bin/xclbinutil
 popd
 
