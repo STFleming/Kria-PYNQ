@@ -31,7 +31,7 @@ then
   git submodule init && git submodule update
 else
   rm -rf pynq/
-  git clone https://github.com/Xilinx/PYNQ.git -b image_v2.7 --depth 1 pynq
+  #git clone https://github.com/Xilinx/PYNQ.git -b image_v2.7 --depth 1 pynq
 fi
 
 
@@ -49,16 +49,16 @@ done
 # Install Required Debian Packages
 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 \
 	        --verbose 803DDF595EA7B6644F9B96B752150A179A9E84C9
-echo "deb http://ppa.launchpad.net/ubuntu-xilinx/updates/ubuntu focal main" > /etc/apt/sources.list.d/xilinx-gstreamer.list
+echo "deb http://ppa.launchpad.net/ubuntu-xilinx/updates/ubuntu jammy main" > /etc/apt/sources.list.d/xilinx-gstreamer.list
 apt update 
 
 apt-get -o DPkg::Lock::Timeout=10 update && \
-apt-get install -y python3.8-venv python3-cffi libssl-dev libcurl4-openssl-dev \
+apt-get install -y python3.10-venv python3-cffi libssl-dev libcurl4-openssl-dev \
   portaudio19-dev libcairo2-dev libdrm-xlnx-dev libopencv-dev python3-opencv graphviz i2c-tools \
   fswebcam
 
 # Install PYNQ Virtual Environment 
-pushd pynq/sdbuild/packages/python_packages_focal
+pushd pynq/sdbuild/packages/python_packages_jammy
 mkdir -p $PYNQ_VENV
 cat > $PYNQ_VENV/pip.conf <<EOT
 [install]
@@ -75,6 +75,15 @@ echo "export BOARD=$BOARD" >> /etc/profile.d/pynq_venv.sh
 echo "export XILINX_XRT=/usr" >> /etc/profile.d/pynq_venv.sh
 source /etc/profile.d/pynq_venv.sh
 
+# PYNQMetadata
+pushd pydantic-pynq-metadata
+python -m pip install .
+popd
+
+# PYNQUtils
+pushd pynq-utils
+python -m pip install .
+popd
 
 # PYNQ JUPYTER
 pushd pynq/sdbuild/packages/jupyter
@@ -91,7 +100,9 @@ popd
 
 
 # PYNQ Python Package
-python -m pip install pynq
+pushd pynq
+python -m pip install . --no-build-isolation
+popd
 
 
 # Get PYNQ Binaries (ublaze compiler and xclbinutils
@@ -126,10 +137,6 @@ echo "python3 /usr/local/share/pynq-venv/pynq-dts/insert_dtbo.py" >> /etc/profil
 source /etc/profile.d/pynq_venv.sh
 popd
 
-# Set up pynq pl_server
-cp pynq/sdbuild/packages/pynq/pl_server.sh /usr/local/bin
-cp pynq/sdbuild/packages/pynq/pl_server.service /lib/systemd/system
-systemctl enable pl_server
 
 #Install base overlay
 python3 -m pip install .
@@ -141,7 +148,8 @@ python3 -m pip install pynq-helloworld
 
 # Install composable overlays
 pushd /tmp
-git clone https://github.com/Xilinx/PYNQ_Composable_Pipeline.git
+rm -rf ./PYNQ_Composable_Pipeline
+git clone https://github.com/Xilinx/PYNQ_Composable_Pipeline.git -b v1.1.0-dev
 python3 -m pip install PYNQ_Composable_Pipeline/ --no-use-pep517
 popd
 
@@ -149,10 +157,9 @@ popd
 # Install Pynq Peripherals
 python3 -m pip install git+https://github.com/Xilinx/PYNQ_Peripherals.git
 
-# Install DPU-PYNQ
-yes Y | apt remove --purge vitis-ai-runtime
-python3 -m pip install pynq-dpu --no-use-pep517
-
+## Install DPU-PYNQ
+#yes Y | apt remove --purge vitis-ai-runtime
+#python3 -m pip install pynq-dpu --no-use-pep517
 
 # Deliver all notebooks
 yes Y | pynq-get-notebooks -p $PYNQ_JUPYTER_NOTEBOOKS -f
@@ -172,9 +179,8 @@ done
 sed -i 's/Specifically a RALink WiFi dongle commonly used with \\n//g' $PYNQ_JUPYTER_NOTEBOOKS/common/wifi.ipynb
 sed -i 's/Raspberry Pi kits is connected into the board.//g' $PYNQ_JUPYTER_NOTEBOOKS/common/wifi.ipynb
 
-
 # Patch microblaze to use virtualenv libraries
-sed -i "s/opt\/microblaze/usr\/local\/share\/pynq-venv\/bin/g" /usr/local/share/pynq-venv/lib/python3.8/site-packages/pynq/lib/pynqmicroblaze/rpc.py
+sed -i "s/opt\/microblaze/usr\/local\/share\/pynq-venv\/bin/g" /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq/lib/pynqmicroblaze/rpc.py
 
 # Remove unnecessary notebooks
 rm -rf $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/app* $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/grove_joystick
@@ -183,14 +189,22 @@ rm -rf $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/app* $PYNQ_JUPYTER_NOTEBOOKS/pyn
 chown $LOGNAME:$LOGNAME -R $PYNQ_JUPYTER_NOTEBOOKS
 chmod ugo+rw -R $PYNQ_JUPYTER_NOTEBOOKS
 
-
 # Start Jupyter and pl_server services now
 systemctl start jupyter.service
-systemctl start pl_server.service
 
 # Purge libdrm-xlnx-dev to allow `apt upgrade`
 apt-get purge -y libdrm-xlnx-dev
 apt-get purge -y libdrm-xlnx-amdgpu1
+
+# OpenCV
+python3 -m pip install opencv-python
+apt-get install ffmpeg libsm6 libxext6 -y
+
+# libssl
+wget wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.0l-1~deb9u6_arm64.deb
+dpkg -i dpkg -i libssl1.1_1.1.0l-1~deb9u6_arm64.deb
+
+# boost_filesystem
 
 # Ask to connect to Jupyter
 ip_addr=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
