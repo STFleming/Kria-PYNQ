@@ -190,8 +190,13 @@ rm -rf $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/app* $PYNQ_JUPYTER_NOTEBOOKS/pyn
 chown $LOGNAME:$LOGNAME -R $PYNQ_JUPYTER_NOTEBOOKS
 chmod ugo+rw -R $PYNQ_JUPYTER_NOTEBOOKS
 
-# Start Jupyter and pl_server services now
+# Start Jupyter services 
 systemctl start jupyter.service
+
+# Start the service for clearing the statefile on boot
+cp pynq/sdbuild/packages/clear_pl_statefile/clear_pl_statefile.sh /usr/local/bin
+cp pynq/sdbuild/packages/clear_pl_statefile/clear_pl_statefile.service /lib/systemd/system
+systemctl enable clear_pl_statefile
 
 # Purge libdrm-xlnx-dev to allow `apt upgrade`
 apt-get purge -y libdrm-xlnx-dev
@@ -204,8 +209,6 @@ apt-get install ffmpeg libsm6 libxext6 -y
 # libssl
 wget wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.0l-1~deb9u6_arm64.deb
 dpkg -i dpkg -i libssl1.1_1.1.0l-1~deb9u6_arm64.deb
-
-# boost_filesystem
 
 # Ask to connect to Jupyter
 ip_addr=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
