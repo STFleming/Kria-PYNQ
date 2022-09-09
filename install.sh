@@ -75,6 +75,14 @@ echo "export BOARD=$BOARD" >> /etc/profile.d/pynq_venv.sh
 echo "export XILINX_XRT=/usr" >> /etc/profile.d/pynq_venv.sh
 source /etc/profile.d/pynq_venv.sh
 
+# Check to makesure that we are in the venv before proceeding.
+if [[ "$VIRTUAL_ENV" == "" ]]
+then
+        echo "ERROR: could not enter the Pynq venv, stopping the installation"
+        exit 1
+fi
+
+
 # PYNQMetadata
 pushd pydantic-pynq-metadata
 python -m pip install .
