@@ -131,6 +131,7 @@ cp pynq-v3.0-binaries/xrt/xclbinutil /usr/local/share/pynq-venv/bin/
 chmod +x /usr/local/share/pynq-venv/bin/xclbinutil
 popd
 
+cp -r /tmp/pynq-v3.0-binaries/bsps/bsp_iop_pmod /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq/lib/pmod/
 
 # define the name of the platform
 echo "$BOARD" > /etc/xocl.txt
