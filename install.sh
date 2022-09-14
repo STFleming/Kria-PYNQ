@@ -19,6 +19,29 @@ fi
 
 echo -e "${GREEN}Installing PYNQ, this process takes around 25 minutes ${NC}"
 
+##echo -e "${YELLOW} Extracting archive kria_v3.0_binaries.tar.gz${NC}"
+### Get PYNQ Binaries (gcc-mb/sdist/pynq v3.0/pynqutils/pynqmetadata/xclbinutil)
+##cp kria_v3.0_binaries.tar.gz /tmp
+##pushd /tmp
+##if [ $(file --mime-type -b kria_v3.0_binaries.tar.gz) != "application/gzip" ]; then
+##  echo -e "${RED}Could not extract pynq binaries, is the tarball named correctly?${NC}\n"
+##  exit
+##fi
+##tar -xvf kria_v3.0_binaries.tar.gz
+##popd
+
+# Populate the repo
+echo -e "${YELLOW} Copying SDIST ${NC}"
+sudo rm -rf pynq
+cp -r /tmp/kria_v3.0_binaries/pynq-3.0.0 ./
+mv pynq-3.0.0 pynq
+echo -e "${YELLOW} Copying PYNQmetadata ${NC}"
+cp -r /tmp/kria_v3.0_binaries/pydantic-pynq-metadata ./
+echo -e "${YELLOW} Copying PYNQutils ${NC}"
+cp -r /tmp/kria_v3.0_binaries/pynq-utils ./
+echo -e "${YELLOW} Copying Latest PYNQ repo ${NC}"
+cp -r /tmp/kria_v3.0_binaries/PYNQ ./PYNQ
+
 ARCH=aarch64
 HOME=/root
 PYNQ_JUPYTER_NOTEBOOKS=/home/$LOGNAME/jupyter_notebooks
@@ -35,7 +58,7 @@ PYNQ_VENV=/usr/local/share/pynq-venv
 #fi
 
 
-# Stop unattended upgrades to prevent apt install from failing
+## Stop unattended upgrades to prevent apt install from failing
 systemctl stop unattended-upgrades.service
 
 
@@ -58,7 +81,8 @@ apt-get install -y python3.10-venv python3-cffi libssl-dev libcurl4-openssl-dev 
   fswebcam
 
 # Install PYNQ Virtual Environment 
-pushd pynq/sdbuild/packages/python_packages_jammy
+cp PYNQ/sdbuild/packages/python_packages_jammy/requirements.txt /root/
+pushd PYNQ/sdbuild/packages/python_packages_jammy
 mkdir -p $PYNQ_VENV
 cat > $PYNQ_VENV/pip.conf <<EOT
 [install]
@@ -94,44 +118,36 @@ python -m pip install .
 popd
 
 # PYNQ JUPYTER
-pushd pynq/sdbuild/packages/jupyter
+pushd PYNQ/sdbuild/packages/jupyter
 ./pre.sh
 ./qemu.sh
 popd
 
 
 # PYNQ Allocator
-pushd pynq/sdbuild/packages/libsds
+pushd PYNQ/sdbuild/packages/libsds
 ./pre.sh
 ./qemu.sh
 popd
 
 
 # PYNQ Python Package
-pushd pynq
+pushd PYNQ 
 python -m pip install . --no-build-isolation
 popd
 
 
-# Get PYNQ Binaries (ublaze compiler and xclbinutils
-cp pynq_binaries.tar.gz /tmp
+## GCC-MB and XCLBINUTILS
 pushd /tmp
-#wget https://bit.ly/pynq_binaries_3_0 -O pynq_binaries.tar.gz
-if [ $(file --mime-type -b pynq_binaries.tar.gz) != "application/gzip" ]; then
-  echo -e "${RED}Could not download pynq binaries, server may be down${NC}\n"
-  exit
-fi
 
-tar -xf pynq_binaries.tar.gz
-
-cp -r /tmp/pynq-v3.0-binaries/gcc-mb/microblazeel-xilinx-elf /usr/local/share/pynq-venv/bin/
+cp -r /tmp/kria_v3.0_binaries/gcc-mb/microblazeel-xilinx-elf /usr/local/share/pynq-venv/bin/
 echo "export PATH=\$PATH:/usr/local/share/pynq-venv/bin/microblazeel-xilinx-elf/bin/" >> /etc/profile.d/pynq_venv.sh
 
-cp pynq-v3.0-binaries/xrt/xclbinutil /usr/local/share/pynq-venv/bin/
+cp /tmp/kria_v3.0_binaries/xrt/xclbinutil /usr/local/share/pynq-venv/bin/
 chmod +x /usr/local/share/pynq-venv/bin/xclbinutil
 popd
 
-cp -r /tmp/pynq-v3.0-binaries/bsps/bsp_iop_pmod /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq/lib/pmod/
+#cp -r /tmp/pynq-v3.0-binaries/bsps/bsp_iop_pmod /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq/lib/pmod/
 
 # define the name of the platform
 echo "$BOARD" > /etc/xocl.txt
@@ -163,14 +179,14 @@ git clone https://github.com/Xilinx/PYNQ_Composable_Pipeline.git -b v1.1.0-dev
 python3 -m pip install PYNQ_Composable_Pipeline/ --no-use-pep517
 popd
 
-
 # Install Pynq Peripherals
 python3 -m pip install git+https://github.com/Xilinx/PYNQ_Peripherals.git
 
+## Currently no DPU Support 
 ## Install DPU-PYNQ
 #yes Y | apt remove --purge vitis-ai-runtime
 #python3 -m pip install pynq-dpu --no-use-pep517
-
+#
 # Deliver all notebooks
 yes Y | pynq-get-notebooks -p $PYNQ_JUPYTER_NOTEBOOKS -f
 
@@ -203,8 +219,8 @@ chmod ugo+rw -R $PYNQ_JUPYTER_NOTEBOOKS
 systemctl start jupyter.service
 
 # Start the service for clearing the statefile on boot
-cp pynq/sdbuild/packages/clear_pl_statefile/clear_pl_statefile.sh /usr/local/bin
-cp pynq/sdbuild/packages/clear_pl_statefile/clear_pl_statefile.service /lib/systemd/system
+cp PYNQ/sdbuild/packages/clear_pl_statefile/clear_pl_statefile.sh /usr/local/bin
+cp PYNQ/sdbuild/packages/clear_pl_statefile/clear_pl_statefile.service /lib/systemd/system
 systemctl enable clear_pl_statefile
 
 # Purge libdrm-xlnx-dev to allow `apt upgrade`
@@ -215,9 +231,9 @@ apt-get purge -y libdrm-xlnx-amdgpu1
 python3 -m pip install opencv-python
 apt-get install ffmpeg libsm6 libxext6 -y
 
-# libssl
-wget wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.0l-1~deb9u6_arm64.deb
-dpkg -i dpkg -i libssl1.1_1.1.0l-1~deb9u6_arm64.deb
+## libssl
+#wget wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.0l-1~deb9u6_arm64.deb
+#dpkg -i dpkg -i libssl1.1_1.1.0l-1~deb9u6_arm64.deb
 
 # Ask to connect to Jupyter
 ip_addr=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
