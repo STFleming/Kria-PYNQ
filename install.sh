@@ -19,16 +19,16 @@ fi
 
 echo -e "${GREEN}Installing PYNQ, this process takes around 25 minutes ${NC}"
 
-##echo -e "${YELLOW} Extracting archive kria_v3.0_binaries.tar.gz${NC}"
-### Get PYNQ Binaries (gcc-mb/sdist/pynq v3.0/pynqutils/pynqmetadata/xclbinutil)
-##cp kria_v3.0_binaries.tar.gz /tmp
-##pushd /tmp
-##if [ $(file --mime-type -b kria_v3.0_binaries.tar.gz) != "application/gzip" ]; then
-##  echo -e "${RED}Could not extract pynq binaries, is the tarball named correctly?${NC}\n"
-##  exit
-##fi
-##tar -xvf kria_v3.0_binaries.tar.gz
-##popd
+echo -e "${YELLOW} Extracting archive kria_v3.0_binaries.tar.gz${NC}"
+# Get PYNQ Binaries (gcc-mb/sdist/pynq v3.0/pynqutils/pynqmetadata/xclbinutil)
+cp kria_v3.0_binaries.tar.gz /tmp
+pushd /tmp
+if [ $(file --mime-type -b kria_v3.0_binaries.tar.gz) != "application/gzip" ]; then
+  echo -e "${RED}Could not extract pynq binaries, is the tarball named correctly?${NC}\n"
+  exit
+fi
+tar -xvf kria_v3.0_binaries.tar.gz
+popd
 
 # Populate the repo
 echo -e "${YELLOW} Copying SDIST ${NC}"
@@ -235,8 +235,13 @@ apt-get install ffmpeg libsm6 libxext6 -y
 #wget wget http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.0l-1~deb9u6_arm64.deb
 #dpkg -i dpkg -i libssl1.1_1.1.0l-1~deb9u6_arm64.deb
 
+# PMOD BSPS
+cp -r pynq/pynq/lib/pmod/bsp_iop_pmod /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq/lib/pmod/
+
+# Latest composable arch
+cp -r /tmp/kria_v3.0_binaries/composable/overlay/* /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/
+
 # Ask to connect to Jupyter
 ip_addr=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
 echo -e "${GREEN}PYNQ Installation completed.${NC}\n"
 echo -e "\n${YELLOW}To continue with the PYNQ experience, connect to JupyterLab via a web browser using this url: ${ip_addr}:9090/lab or $(hostname):9090/lab - The password is xilinx${NC}\n"
-
