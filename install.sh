@@ -240,6 +240,8 @@ cp -r pynq/pynq/lib/pmod/bsp_iop_pmod /usr/local/share/pynq-venv/lib/python3.10/
 
 # Latest composable arch
 cp -r /tmp/kria_v3.0_binaries/composable/overlay/* /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/
+# Clear any stale *.pkl files
+rm -rf /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/*.pkl
 
 # Ask to connect to Jupyter
 ip_addr=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
