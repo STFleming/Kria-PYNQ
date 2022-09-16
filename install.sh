@@ -241,6 +241,8 @@ sed -i "s/opt\/microblaze/usr\/local\/share\/pynq-venv\/bin/g" /usr/local/share/
 
 # Remove unnecessary notebooks
 rm -rf $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/app* $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/grove_joystick
+# Remove old composable files
+rm -rf /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/
 
 # Change notebooks folder ownership and permissions
 chown $LOGNAME:$LOGNAME -R $PYNQ_JUPYTER_NOTEBOOKS
