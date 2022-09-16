@@ -17,7 +17,38 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#    Input Arguments
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+USAGE="${RED} usage: ${NC}  sudo ./install -b '{KV260 | KR260}'"
+
+if [ "$#" -ne 2 ]; then
+   echo -e $USAGE
+   exit 0 
+fi
+
+while getopts b: flag
+do
+    case "${flag}" in
+        b) board=${OPTARG};;
+        *) echo -e $USAGE; exit 0;;
+    esac
+done
+
+case $board in
+	"KV260") echo -e ;;
+	"KR260") echo -e ;;
+	*) echo -e $USAGE; exit 0;;
+esac
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 echo -e "${GREEN}Installing PYNQ, this process takes around 25 minutes ${NC}"
+
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#    Autorestart services
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 echo -e "${YELLOW} Extracting archive kria_v3.0_binaries.tar.gz${NC}"
 # Get PYNQ Binaries (gcc-mb/sdist/pynq v3.0/pynqutils/pynqmetadata/xclbinutil)
