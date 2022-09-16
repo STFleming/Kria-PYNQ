@@ -89,7 +89,7 @@ PYNQ_VENV=/usr/local/share/pynq-venv
 #fi
 
 
-## Stop unattended upgrades to prevent apt install from failing
+# Stop unattended upgrades to prevent apt install from failing
 systemctl stop unattended-upgrades.service
 
 
@@ -241,9 +241,6 @@ sed -i "s/opt\/microblaze/usr\/local\/share\/pynq-venv\/bin/g" /usr/local/share/
 
 # Remove unnecessary notebooks
 rm -rf $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/app* $PYNQ_JUPYTER_NOTEBOOKS/pynq_peripherals/grove_joystick
-# Remove old composable files
-rm -rf /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/
-
 # Change notebooks folder ownership and permissions
 chown $LOGNAME:$LOGNAME -R $PYNQ_JUPYTER_NOTEBOOKS
 chmod ugo+rw -R $PYNQ_JUPYTER_NOTEBOOKS
@@ -270,6 +267,9 @@ apt-get install ffmpeg libsm6 libxext6 -y
 
 # PMOD BSPS
 cp -r pynq/pynq/lib/pmod/bsp_iop_pmod /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq/lib/pmod/
+
+# Remove old composable files
+rm -rf /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/*
 
 # Latest composable arch
 cp -r /tmp/kria_v3.0_binaries/composable/overlay/* /usr/local/share/pynq-venv/lib/python3.10/site-packages/pynq_composable/overlay/
