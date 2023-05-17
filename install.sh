@@ -297,6 +297,14 @@ apt-get purge -y libdrm-xlnx-amdgpu1
 python3 -m pip install opencv-python
 apt-get install ffmpeg libsm6 libxext6 -y
 
+# Bump PYNQ-Metadata/Utils version
+python3 -m pip uninstall pynqutils
+python3 -m pip uninstall pynqmetadata
+python3 -m pip cache purge
+python3 -m pip install pynqmetadata
+python3 -m pip install pynqutils
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #    Selftest generation
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
